@@ -1,7 +1,7 @@
 const path = require('path');
 const express = require("express"); 
 const cors = require('cors');
-const compression = require('compression')
+const compression = require('compression');
 const morgan = require("morgan");
 const dotenv = require("dotenv");
 
@@ -9,7 +9,6 @@ dotenv.config({ path: "config.env" });
 const dbConnetion = require("../config/database");
 const ApiError = require("../utils/apiError");
 const globalError = require("../middlewares/errorMiddleWare");
-
 
 // Routes
 const categoryRoute = require("../routes/categoryRoute");
@@ -24,7 +23,7 @@ const AdressesRoutes = require("../routes/adressesRoute");
 const couponRoutes = require("../routes/couponRoute");
 const cartRoutes = require("../routes/cartRoutes");
 const orderRoutes = require("../routes/orderRoute");
-const {webhookCheckout} = require('../services/orderService')
+const { webhookCheckout } = require('../services/orderService');
 
 // Database Connecting
 dbConnetion();
@@ -40,9 +39,7 @@ app.options('*', cors());
 app.use(compression());
 
 //checkout webhook 
-
 app.post('/webhook-checkout', express.raw({ type: 'application/json' }), webhookCheckout);
-
 
 if (process.env.NODE_ENV === "deployment") {
   app.use(morgan("dev"));
@@ -51,17 +48,17 @@ if (process.env.NODE_ENV === "deployment") {
 
 // Mount Routes
 app.use("/api/v1/categories", categoryRoute);
-  app.use("/api/v1/subcategories", subCategoryRoute);
-  app.use("/api/v1/brands", brandRoutes);
-  app.use("/api/v1/products", productRoutes);
-  app.use("/api/v1/users", userRoutes);
-  app.use("/api/v1/auth", authRoutes);
-  app.use("/api/v1/reviews", reviewRoutes);
-  app.use("/api/v1/wishlist", WishListRoutes);
-  app.use("/api/v1/adresses", AdressesRoutes);
-  app.use("/api/v1/coupons", couponRoutes);
-  app.use("/api/v1/cart", cartRoutes);
-  app.use("/api/v1/orders", orderRoutes); 
+app.use("/api/v1/subcategories", subCategoryRoute);
+app.use("/api/v1/brands", brandRoutes);
+app.use("/api/v1/products", productRoutes);
+app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/reviews", reviewRoutes);
+app.use("/api/v1/wishlist", WishListRoutes);
+app.use("/api/v1/adresses", AdressesRoutes);
+app.use("/api/v1/coupons", couponRoutes);
+app.use("/api/v1/cart", cartRoutes);
+app.use("/api/v1/orders", orderRoutes); 
 
 // Create error and send it to middleware
 app.all("*", (req, res, next) => {

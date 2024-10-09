@@ -163,49 +163,36 @@ exports.checkoutSession = asyncHandler(async (req, res, next) => {
   const taxPrice = 0;
   const shippingPrice = 0;
 
-  // 1) Get cart based on cartId
   const cart = await Cart.findById(req.params.cartId);
 
   if (!cart) {
-    return next(
-      new ApiError(`There is no cart with this id ${req.params.cartId}`)
-    );
+    return next(new ApiError(`There is no cart with this id ${req.params.cartId}`));
   }
 
-  // 2) Get order price based on cart price (Check if coupon is applied)
-  const cartPrice = cart.totalCartPriceAfterDiscount
-    ? cart.totalCartPriceAfterDiscount
-    : cart.totalCartPrice;
+  const cartPrice = cart.totalCartPriceAfterDiscount || cart.totalCartPrice;
+  const totalOrderPriceInCents = Math.round((cartPrice + taxPrice + shippingPrice) * 100);
 
-  // Round the total price to avoid floating point issues
-  const totalOrderPriceInCents = Math.round(
-    (cartPrice + taxPrice + shippingPrice) * 100
-  );
-
-  // 3) Create stripe checkout session using price_data
   const session = await stripe.checkout.sessions.create({
     line_items: [
       {
         price_data: {
-          currency: "sar", // Define the currency
+          currency: "sar",
           product_data: {
-            name: req.user.name, // Use product_data for the name of the user or product
+            name: req.user.name,
           },
-          unit_amount: totalOrderPriceInCents, // Total amount in cents
+          unit_amount: totalOrderPriceInCents,
         },
         quantity: 1,
       },
     ],
-
     mode: "payment",
-    success_url: `${req.protocol}://${req.get("host")}/orders`, // URL on successful payment
-    cancel_url: `${req.protocol}://${req.get("host")}/cart`, // URL if payment is canceled
-    customer_email: req.user.email, // Customer's email for receipt
-    client_reference_id: req.params.cartId, // Reference ID for tracking purposes
-    metadata: req.body.shippingAddress || {}, // Shipping address if provided
+    success_url: `${req.protocol}://${req.get("host")}/orders`,
+    cancel_url: `${req.protocol}://${req.get("host")}/cart`,
+    customer_email: req.user.email,
+    client_reference_id: req.params.cartId,
+    metadata: req.body.shippingAddress || {},
   });
 
-  // 4) Send session to response
   res.status(200).json({ status: "success", session });
 });
 
@@ -216,7 +203,6 @@ const createCartOrder = async (session) => {
   const cart = await Cart.findById(cartId);
   const user = await User.findOne({ email: session.customer_email });
 
-  // 3) Create order with default paymentMethod (Card)
   const order = await Order.create({
     user: user._id,
     cartItems: cart.cartItems,
@@ -227,7 +213,6 @@ const createCartOrder = async (session) => {
     paidAt: Date.now(),
   });
 
-  // 4) After creating Order, decrement Product's Quantity, Increment product's sold
   if (order) {
     const bulkOptions = cart.cartItems.map((item) => ({
       updateOne: {
@@ -235,35 +220,26 @@ const createCartOrder = async (session) => {
         update: { $inc: { quantity: -item.quantity, sold: +item.quantity } },
       },
     }));
-
     await Product.bulkWrite(bulkOptions, {});
   }
 
-  // 5) Clear cart based on cart id
   await Cart.findByIdAndDelete(cartId);
 };
 
-// دالة webhookCheckout
 exports.webhookCheckout = asyncHandler(async (req, res, next) => {
-  const sig = req.headers["stripe-signature"]; // احصل على توقيع Stripe
+  const sig = req.headers["stripe-signature"];
   let event;
 
   try {
-    // استخدم req.rawBody للحصول على جسم الطلب الخام
-    event = stripe.webhooks.constructEvent(
-      req.rawBody,
-      sig,
-      process.env.STRIPE_WEBHOOK_SECRET
-    );
+    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
   } catch (err) {
-    console.error(`Webhook Error: ${err.message}`); // طباعة رسالة الخطأ للمساعدة في التصحيح
+    console.error(`Webhook Error: ${err.message}`);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  // إذا تم إكمال الجلسة بنجاح
   if (event.type === "checkout.session.completed") {
     console.log("Create Order Here");
-    await createCartOrder(event.data.object); // تأكد من استخدام await هنا
+    await createCartOrder(event.data.object);
   }
 
   res.status(200).json({ received: true });
