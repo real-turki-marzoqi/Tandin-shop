@@ -176,7 +176,9 @@ exports.checkoutSession = asyncHandler(async (req, res, next) => {
   const cartPrice = cart.totalCartPriceAfterDiscount
     ? cart.totalCartPriceAfterDiscount
     : cart.totalCartPrice;
-  const totalOrderPrice = cartPrice + taxPrice + shippingPrice;
+  
+  // Round the total price to avoid floating point issues
+  const totalOrderPriceInCents = Math.round((cartPrice + taxPrice + shippingPrice) * 100);
 
   // 3) Create stripe checkout session using price_data
   const session = await stripe.checkout.sessions.create({
@@ -186,7 +188,7 @@ exports.checkoutSession = asyncHandler(async (req, res, next) => {
         product_data: {
           name: req.user.name, // Use product_data for the name of the user or product
         },
-        unit_amount: totalOrderPrice *100, // Total amount in cents
+        unit_amount: totalOrderPriceInCents, // Total amount in cents
       },
       quantity: 1
     }],
@@ -205,23 +207,24 @@ exports.checkoutSession = asyncHandler(async (req, res, next) => {
 
 
 
+
 exports.webhookCheckout = asyncHandler(async (req, res, next) => {
   const sig = req.headers['stripe-signature'];
-
   let event;
 
   try {
-    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+    // Parse the raw body as the payload for stripe webhook
+    event = stripe.webhooks.constructEvent(req.rawBody, sig, process.env.STRIPE_WEBHOOK_SECRET);
   } catch (err) {
+    console.error(`Webhook Error: ${err.message}`); // Print the error for better debugging
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  
+  // Check for checkout session completion event
   if (event.type === 'checkout.session.completed') {
     console.log('Create Order Here');
-   
+    // Add your logic for creating an order here
   }
 
   res.status(200).json({ received: true });
 });
-
