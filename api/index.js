@@ -24,6 +24,7 @@ const AdressesRoutes = require("../routes/adressesRoute");
 const couponRoutes = require("../routes/couponRoute");
 const cartRoutes = require("../routes/cartRoutes");
 const orderRoutes = require("../routes/orderRoute");
+const {webhookCheckout} = require('../services/orderService')
 
 // Database Connecting
 dbConnetion();
@@ -37,6 +38,10 @@ app.use(express.static(path.join(__dirname, 'uploads')));
 app.use(cors());
 app.options('*', cors());
 app.use(compression());
+
+//checkout webhook 
+
+app.post('/webhook-checkout', express.raw({type: 'application/json'}),webhookCheckout)
 
 if (process.env.NODE_ENV === "deployment") {
   app.use(morgan("dev"));
