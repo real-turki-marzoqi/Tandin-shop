@@ -41,11 +41,7 @@ app.use(compression());
 
 //checkout webhook 
 
-app.post(
-  '/webhook-checkout',
-  express.raw({ type: 'application/json' }),
-  webhookCheckout
-);
+app.post('/webhook-checkout', express.raw({type: 'application/json'}),webhookCheckout)
 
 if (process.env.NODE_ENV === "deployment") {
   app.use(morgan("dev"));
