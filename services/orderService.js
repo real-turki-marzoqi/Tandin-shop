@@ -3,9 +3,9 @@ const asyncHandler = require("express-async-handler");
 const factory = require("./handlersFactory");
 const Cart = require("../config/models/cartModel");
 const Order = require("../config/models/orderModel");
+const User = require("../config/models/userModel");
 const Product = require("../config/models/productModel");
 const ApiError = require("../utils/apiError");
-
 
 // @desc Create Cash Order
 // @route POST /api/v1/orders/cartId
@@ -178,53 +178,93 @@ exports.checkoutSession = asyncHandler(async (req, res, next) => {
     : cart.totalCartPrice;
 
   // Round the total price to avoid floating point issues
-  const totalOrderPriceInCents = Math.round((cartPrice + taxPrice + shippingPrice) * 100);
+  const totalOrderPriceInCents = Math.round(
+    (cartPrice + taxPrice + shippingPrice) * 100
+  );
 
   // 3) Create stripe checkout session using price_data
   const session = await stripe.checkout.sessions.create({
-    line_items: [{
-      price_data: {
-        currency: 'sar', // Define the currency
-        product_data: {
-          name: req.user.name, // Use product_data for the name of the user or product
+    line_items: [
+      {
+        price_data: {
+          currency: "sar", // Define the currency
+          product_data: {
+            name: req.user.name, // Use product_data for the name of the user or product
+          },
+          unit_amount: totalOrderPriceInCents, // Total amount in cents
         },
-        unit_amount: totalOrderPriceInCents, // Total amount in cents
+        quantity: 1,
       },
-      quantity: 1
-    }],
+    ],
 
-    mode: 'payment',
-    success_url: `${req.protocol}://${req.get('host')}/orders`, // URL on successful payment
-    cancel_url: `${req.protocol}://${req.get('host')}/cart`, // URL if payment is canceled
+    mode: "payment",
+    success_url: `${req.protocol}://${req.get("host")}/orders`, // URL on successful payment
+    cancel_url: `${req.protocol}://${req.get("host")}/cart`, // URL if payment is canceled
     customer_email: req.user.email, // Customer's email for receipt
     client_reference_id: req.params.cartId, // Reference ID for tracking purposes
-    metadata: req.body.shippingAddress || {} // Shipping address if provided
+    metadata: req.body.shippingAddress || {}, // Shipping address if provided
   });
 
   // 4) Send session to response
   res.status(200).json({ status: "success", session });
 });
 
+const createCartOrder = async (session) => {
+  const cartId = session.client_reference_id;
+  const shippingAddress = session.metadata;
+  const orderPrice = session.amount_total;
+  const cart = await Cart.findById(cartId);
+  const user = await User.findOne({ email: session.customer_email });
 
+  // 3) Create order with default paymentMethod (Card)
+  const order = await Order.create({
+    user: user._id,
+    cartItems: cart.cartItems,
+    shippingAddress,
+    totalOrderPrice: orderPrice,
+    paymentMethod: "card",
+    isPaid: true,
+    paidAt: Date.now(),
+  });
 
+  // 4) After creating Order, decrement Product's Quantity, Increment product's sold
+  if (order) {
+    const bulkOptions = cart.cartItems.map((item) => ({
+      updateOne: {
+        filter: { _id: item.product },
+        update: { $inc: { quantity: -item.quantity, sold: +item.quantity } },
+      },
+    }));
+
+    await Product.bulkWrite(bulkOptions, {});
+  }
+
+  // 5) Clear cart based on cart id
+  await Cart.findByIdAndDelete(cartId);
+};
+
+// دالة webhookCheckout
 exports.webhookCheckout = asyncHandler(async (req, res, next) => {
-  const sig = req.headers['stripe-signature']; // احصل على توقيع Stripe
+  const sig = req.headers["stripe-signature"]; // احصل على توقيع Stripe
   let event;
 
   try {
     // استخدم req.rawBody للحصول على جسم الطلب الخام
-    event = stripe.webhooks.constructEvent(req.rawBody, sig, process.env.STRIPE_WEBHOOK_SECRET);
+    event = stripe.webhooks.constructEvent(
+      req.rawBody,
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
   } catch (err) {
     console.error(`Webhook Error: ${err.message}`); // طباعة رسالة الخطأ للمساعدة في التصحيح
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
   // إذا تم إكمال الجلسة بنجاح
-  if (event.type === 'checkout.session.completed') {
-    console.log('Create Order Here');
-    // إضافة منطق إنشاء الطلب هنا
+  if (event.type === "checkout.session.completed") {
+    console.log("Create Order Here");
+    await createCartOrder(event.data.object); // تأكد من استخدام await هنا
   }
 
   res.status(200).json({ received: true });
 });
-
