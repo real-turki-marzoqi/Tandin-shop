@@ -213,18 +213,19 @@ exports.webhookCheckout = asyncHandler(async (req, res, next) => {
   let event;
 
   try {
-    // Parse the raw body as the payload for stripe webhook
+    // استخدم req.rawBody بدلاً من req.body للحصول على البيانات الخام
     event = stripe.webhooks.constructEvent(req.rawBody, sig, process.env.STRIPE_WEBHOOK_SECRET);
   } catch (err) {
-    console.error(`Webhook Error: ${err.message}`); // Print the error for better debugging
+    console.error(`Webhook Error: ${err.message}`); // طباعة رسالة الخطأ للمساعدة في التصحيح
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  // Check for checkout session completion event
+  // إذا تم إكمال الجلسة بنجاح
   if (event.type === 'checkout.session.completed') {
     console.log('Create Order Here');
-    // Add your logic for creating an order here
+    // إضافة المنطق الخاص بإنشاء الطلب هنا
   }
 
   res.status(200).json({ received: true });
 });
+
