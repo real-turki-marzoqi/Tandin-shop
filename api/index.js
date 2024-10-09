@@ -32,6 +32,10 @@ dbConnetion();
 // APP
 const app = express();
 
+//checkout webhook 
+app.post('/webhook-checkout', express.raw({ type: 'application/json' }), webhookCheckout);
+
+
 // Middlewares
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'uploads')));
@@ -39,9 +43,9 @@ app.use(cors());
 app.options('*', cors());
 app.use(compression());
 
-//checkout webhook 
-// استخدم body-parser.raw() فقط لويب هوك
-app.post('/webhook-checkout', bodyParser.raw({ type: 'application/json' }), webhookCheckout);
+ 
+
+
 
 if (process.env.NODE_ENV === "deployment") {
   app.use(morgan("dev"));
