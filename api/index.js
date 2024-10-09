@@ -1,9 +1,10 @@
 const path = require('path');
-const express = require("express"); 
+const express = require("express");
 const cors = require('cors');
 const compression = require('compression');
 const morgan = require("morgan");
 const dotenv = require("dotenv");
+const bodyParser = require('body-parser'); // إضافة body-parser
 
 dotenv.config({ path: "config.env" });
 const dbConnetion = require("../config/database");
@@ -29,17 +30,18 @@ const { webhookCheckout } = require('../services/orderService');
 dbConnetion();
 
 // APP
-const app = express(); 
+const app = express();
 
 // Middlewares
-app.use(express.json()); 
+app.use(express.json());
 app.use(express.static(path.join(__dirname, 'uploads')));
 app.use(cors());
 app.options('*', cors());
 app.use(compression());
 
 //checkout webhook 
-app.post('/webhook-checkout', express.raw({ type: 'application/json' }), webhookCheckout);
+// استخدم body-parser.raw() فقط لويب هوك
+app.post('/webhook-checkout', bodyParser.raw({ type: 'application/json' }), webhookCheckout);
 
 if (process.env.NODE_ENV === "deployment") {
   app.use(morgan("dev"));
