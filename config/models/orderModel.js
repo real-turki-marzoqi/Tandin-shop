@@ -1,0 +1,69 @@
+const mongoose = require("mongoose");
+
+const orderSchema = new mongoose.Schema(
+  {
+    user: {
+      type: mongoose.Schema.ObjectId,
+      ref: "User", 
+      required: [true, "User is required"],
+    },
+    cartItems: [
+      {
+        product: {
+          type: mongoose.Schema.ObjectId,
+          ref: "Product",
+        },
+        quantity: {
+          type: Number,
+          default: 1,
+        },
+        color: String,
+        price: Number,
+      },
+    ],
+    taxPrice: {
+      type: Number,
+      default: 0,
+    },
+    shippingPrice: {
+      type: Number,
+      default: 0,
+    },
+    totalOrderPrice: {
+      type: Number, // تغيير النوع إلى Number
+    },
+    paymentMethod: {
+      type: String,
+      enum: ["cash", "card"],
+      default: "cash",
+    },
+    isPaid: {
+      type: Boolean,
+      default: false,
+    },
+    paidAt: Date,
+    isDelivered: {
+      type: Boolean,
+      default: false,
+    },
+    deliveredAt: Date,
+    shippingAddress: {
+      city: { type: String,  }, 
+      phone: { type: String,},
+      postalCode: { type: String }, 
+      details: String, 
+    },
+  },
+  { timestamps: true }
+);
+
+// mongoose query middleware to select Category Name
+orderSchema.pre(/^find/, function (next) {
+  this.populate({ path: 'user', select: "name profileImage email phone " })
+    .populate({
+      path: "cartItems.product", select: "title imageCover "
+    });
+  next();
+});
+
+module.exports = mongoose.model('Order', orderSchema);
