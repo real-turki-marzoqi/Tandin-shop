@@ -176,7 +176,7 @@ exports.checkoutSession = asyncHandler(async (req, res, next) => {
   const cartPrice = cart.totalCartPriceAfterDiscount
     ? cart.totalCartPriceAfterDiscount
     : cart.totalCartPrice;
-  
+
   // Round the total price to avoid floating point issues
   const totalOrderPriceInCents = Math.round((cartPrice + taxPrice + shippingPrice) * 100);
 
@@ -207,13 +207,12 @@ exports.checkoutSession = asyncHandler(async (req, res, next) => {
 
 
 
-
 exports.webhookCheckout = asyncHandler(async (req, res, next) => {
-  const sig = req.headers['stripe-signature'];
+  const sig = req.headers['stripe-signature']; // احصل على توقيع Stripe
   let event;
 
   try {
-    // استخدم req.rawBody بدلاً من req.body للحصول على البيانات الخام
+    // استخدم req.rawBody للحصول على جسم الطلب الخام
     event = stripe.webhooks.constructEvent(req.rawBody, sig, process.env.STRIPE_WEBHOOK_SECRET);
   } catch (err) {
     console.error(`Webhook Error: ${err.message}`); // طباعة رسالة الخطأ للمساعدة في التصحيح
@@ -223,7 +222,7 @@ exports.webhookCheckout = asyncHandler(async (req, res, next) => {
   // إذا تم إكمال الجلسة بنجاح
   if (event.type === 'checkout.session.completed') {
     console.log('Create Order Here');
-    // إضافة المنطق الخاص بإنشاء الطلب هنا
+    // إضافة منطق إنشاء الطلب هنا
   }
 
   res.status(200).json({ received: true });
