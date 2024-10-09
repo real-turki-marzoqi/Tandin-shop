@@ -166,12 +166,19 @@ exports.checkoutSession = asyncHandler(async (req, res, next) => {
   const cart = await Cart.findById(req.params.cartId);
 
   if (!cart) {
-    return next(new ApiError(`There is no cart with this id ${req.params.cartId}`));
+    return next(
+      new ApiError(`There is no cart with this id ${req.params.cartId}`)
+    );
   }
 
   const cartPrice = cart.totalCartPriceAfterDiscount || cart.totalCartPrice;
-  const totalOrderPriceInCents = Math.round((cartPrice + taxPrice + shippingPrice) * 100);
+  const totalOrderPriceInCents = Math.round(
+    (cartPrice + taxPrice + shippingPrice) * 100
+  );
 
+  // @desc    Get checkout session from stripe and send it as response
+  // @route   GET /api/v1/orders/checkout-session/cartId
+  // @access  Protected/User
   const session = await stripe.checkout.sessions.create({
     line_items: [
       {
@@ -199,7 +206,7 @@ exports.checkoutSession = asyncHandler(async (req, res, next) => {
 const createCartOrder = async (session) => {
   const cartId = session.client_reference_id;
   const shippingAddress = session.metadata;
-  const orderPrice = session.amount_total;
+  const orderPrice = session.amount_total/100;
   const cart = await Cart.findById(cartId);
   const user = await User.findOne({ email: session.customer_email });
 
@@ -226,19 +233,25 @@ const createCartOrder = async (session) => {
   await Cart.findByIdAndDelete(cartId);
 };
 
+// @desc    This webhook will run when stripe payment success paid
+// @route   POST /webhook-checkout
+// @access  Protected/User
+
 exports.webhookCheckout = asyncHandler(async (req, res, next) => {
   const sig = req.headers["stripe-signature"];
   let event;
 
   try {
-    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
   } catch (err) {
-    console.error(`Webhook Error: ${err.message}`);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
   if (event.type === "checkout.session.completed") {
-    console.log("Create Order Here");
     await createCartOrder(event.data.object);
   }
 
