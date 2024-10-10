@@ -1,6 +1,5 @@
-const asyncHandler = require("express-async-handler");
-const slugify = require("slugify");
 const ApiError = require("../utils/apiError");
+const asyncHandler = require("express-async-handler");
 const ApiFeatures = require("../utils/apiFeatures");
 
 // @desc DELETE Specific DOCUMENT
@@ -53,7 +52,7 @@ exports.getOne = (model, populateOption) =>
     }
 
     // excure query
-    const document =await query;
+    const document = await query;
 
     if (!document) {
       return next(new ApiError(`No document Found For This ID ${id}`, 404));
@@ -100,3 +99,4 @@ exports.getAll = (model, modelName) =>
       .status(200)
       .json({ results: documents.length, pagenationResult, data: documents });
   });
+

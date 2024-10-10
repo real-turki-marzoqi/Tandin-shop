@@ -9,7 +9,7 @@ const rateLimit = require("express-rate-limit");
 const hpp = require("hpp");
 const mongoSanitize = require("express-mongo-sanitize");
 const sanitizeMiddleware = require("../middlewares/sanitizeMiddleware");
-const helmet = require('helmet')
+const helmet = require("helmet");
 
 dotenv.config({ path: "config.env" });
 const dbConnetion = require("../config/database");

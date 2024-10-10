@@ -7,7 +7,8 @@ const {
   updateCategory,
   deleteCategory,
   uploadCategoryImage,
-  resizeImage,
+  categoryImageProssing,
+  deleteCategoryImage,
 } = require("../services/categoryService");
 
 const {
@@ -32,7 +33,7 @@ router
     authService.protect,
     authService.allowedTo("admin","maneger"),
     uploadCategoryImage,
-    resizeImage,
+    categoryImageProssing,
     createCategoryVlidator,
     createCategory
   );
@@ -43,8 +44,9 @@ router
   .put(
     authService.protect,
     authService.allowedTo("admin","maneger"),
+    deleteCategoryImage,
     uploadCategoryImage,
-    resizeImage,
+    categoryImageProssing,
     updateCategoryValidator,
     updateCategory
   )
@@ -52,6 +54,7 @@ router
     authService.protect,
     authService.allowedTo("admin"),
     deleteCategoryValidator,
+    deleteCategoryImage,
      deleteCategory);
 
 module.exports = router;

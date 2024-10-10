@@ -1,30 +1,18 @@
-const asyncHandler = require("express-async-handler");
-const sharp = require("sharp");
-const { v4: uuidv4 } = require("uuid");
-
 const { uploadSingleImage } = require("../middlewares/uploadImageMiddleWare");
 const Brand = require("../config/models/brandModel");
 const factory = require("./handlersFactory");
+const imageFactory = require('../middlewares/imagesMiddleWares')
+
+
 
 // upload Single Image
 exports.uploadBrandImage = uploadSingleImage("image");
 
 // Image Processing
-exports.resizeImage = asyncHandler(async (req, res, next) => {
-  if (req.file && req.file.buffer) {
-    const filename = `brand-${uuidv4()}-${Date.now()}.jpeg`;
+exports.brandeImageProssing =imageFactory.ImageProssing('Brand','Brands')
 
-    await sharp(req.file.buffer)
-      .resize(600, 600)
-      .toFormat("jpeg")
-      .jpeg({ quality: 90 })
-      .toFile(`uploads/brands/${filename}`);
-
-    req.body.image = filename;
-  }
-
-  next();
-});
+// delete image MiddleWare
+exports.deleteBrandImage = imageFactory.deleteImage(Brand, 'Brand', 'Brands');
 
 // @desc get list of BRANDS
 // @route POST /api/v1/brands

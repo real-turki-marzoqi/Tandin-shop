@@ -6,25 +6,19 @@ const { v4: uuidv4 } = require("uuid");
 const Category = require("../config/models/categoryModel");
 const factory = require("./handlersFactory");
 const { uploadSingleImage } = require("../middlewares/uploadImageMiddleWare");
+const imageFactory = require('../middlewares/imagesMiddleWares')
 
-// Image Processing
-exports.resizeImage = asyncHandler(async (req, res, next) => {
-  const filename = `categoty-${uuidv4()}-${Date.now()}.jpeg`;
 
-  if (req.file && req.file.buffer) {
-    await sharp(req.file.buffer)
-      .resize(600, 600)
-      .toFormat("jpeg")
-      .jpeg({ quality: 90 })
-      .toFile(`uploads/categories/${filename}`);
-
-    req.body.image = filename;
-  }
-
-  next();
-});
 // upload Single Image
 exports.uploadCategoryImage = uploadSingleImage("image");
+
+
+
+// Image Processing
+exports.categoryImageProssing =imageFactory.ImageProssing('Category','Categories')
+
+// delete image MiddleWare
+exports.deleteCategoryImage = imageFactory.deleteImage(Category, 'Category', 'Categories');
 
 // @desc get list of categories
 // @route GET /api/v1/categories
