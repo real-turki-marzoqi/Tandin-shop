@@ -21,7 +21,7 @@ const userSchema = new mongoose.Schema(
     phone: {
       type: String,
     },
-    profileImage: {
+    image: {
       type: String,
     },
     password: {
@@ -84,19 +84,7 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
-const setImageUrl = (doc) => {
-  if (doc.profileImage) {
-    const imageUrl = `${process.env.BASE_URL}/users/${doc.profileImage}`;
-    doc.profileImage = imageUrl;
-  }
-};
 
-userSchema.post("init", (doc) => {
-  setImageUrl(doc);
-});
-userSchema.post("save", (doc) => {
-  setImageUrl(doc);
-});
 
 const userModel = mongoose.model("User", userSchema);
 module.exports = userModel;

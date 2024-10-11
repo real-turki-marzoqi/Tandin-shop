@@ -1,62 +1,92 @@
 const { check } = require("express-validator");
 const validatorMiddleWare = require("../../middlewares/validatorMiddleWare");
 const SubCategoryModel = require("../../config/models/subCategoryModel");
+const CategoryModel = require("../../config/models/categoryModel"); 
+const slugify = require('slugify');
 
-//crateSubCategoryVlidator
-exports.crateSubCategoryVlidator = [
+// createSubCategoryValidator
+exports.createSubCategoryValidator = [
   check("category")
     .notEmpty()
-    .withMessage("Main Category Id Required")
+    .withMessage("Main Category ID is required")
     .isMongoId()
-    .withMessage("Invalid Main Category Id"),
+    .withMessage("Invalid Main Category ID")
+    .custom(async (value) => {
+      const category = await CategoryModel.findById(value);
+      if (!category) {
+        throw new Error(`No Category found with this ID: ${value}`);
+      }
+      return true;
+    }),
 
   check("name")
     .notEmpty()
-    .withMessage("SubCategory Name Required")
+    .withMessage("SubCategory Name is required")
     .isLength({ max: 32 })
-    .withMessage("Too long SubCategory Name")
+    .withMessage("SubCategory Name is too long (max 32 characters)")
     .isLength({ min: 2 })
-    .withMessage("Too short Sub Category Name")
-
+    .withMessage("SubCategory Name is too short (min 2 characters)")
     .custom(async (value) => {
       const subCategory = await SubCategoryModel.findOne({ name: value });
       if (subCategory) {
-        throw new Error("Sub Category Name must be Unipue");
+        throw new Error("SubCategory Name must be unique");
       }
+      return true;
+    })
+    .custom((val, { req }) => {
+      req.body.slug = slugify(val);
+      return true;
     }),
 
   validatorMiddleWare,
 ];
 
-//getSubCategoryValidator
+
+// getSubCategoryValidator
 exports.getSubCategoryValidator = [
-  check("id").isMongoId().withMessage("Invalid SubCategory Id format"),
+  check("id").isMongoId().withMessage("Invalid SubCategory ID format"),
   validatorMiddleWare,
 ];
 
-//updateSubCategoryVlaidator
-exports.updateSubCategoryVlaidator = [
-  check("id").isMongoId().withMessage("Invalid SubCategory Id format"),
+// updateSubCategoryValidator
+exports.updateSubCategoryValidator = [
+  check("id").isMongoId().withMessage("Invalid SubCategory ID format"),
+
+  check("category")
+    .optional()
+    .isMongoId()
+    .withMessage("Invalid Main Category ID")
+    .custom(async (value) => {
+      const category = await CategoryModel.findById(value);
+      if (!category) {
+        throw new Error(`No Category found with this ID: ${value}`);
+      }
+      return true;
+    }),
 
   check("name")
-    .notEmpty()
-    .withMessage("SubCategory Name Required")
+    .optional()
     .isLength({ max: 32 })
-    .withMessage("Too long SubCategory Name")
+    .withMessage("SubCategory Name is too long (max 32 characters)")
     .isLength({ min: 2 })
-    .withMessage("Too short Sub Category Name")
-
+    .withMessage("SubCategory Name is too short (min 2 characters)")
     .custom(async (value) => {
       const subCategory = await SubCategoryModel.findOne({ name: value });
       if (subCategory) {
-        throw new Error("Sub Category Name must be Unipue");
+        throw new Error("SubCategory Name must be unique");
       }
+      return true;
+    })
+    .custom((val, { req }) => {
+      req.body.slug = slugify(val);
+      return true;
     }),
+
   validatorMiddleWare,
 ];
 
-//deleteSubCategoryValidator
+// deleteSubCategoryValidator
 exports.deleteSubCategoryValidator = [
-  check("id").isMongoId().withMessage("Invalid SubCategory Id format"),
+  check("id").isMongoId().withMessage("Invalid SubCategory ID format"),
   validatorMiddleWare,
 ];

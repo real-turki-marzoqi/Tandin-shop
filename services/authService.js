@@ -16,6 +16,7 @@ exports.signUp = asyncHandler(async (req, res, next) => {
     name: req.body.name,
     email: req.body.email,
     password: req.body.password,
+    slug: req.body.slug,
   });
   const token = createToken(user._id);
 
@@ -117,7 +118,9 @@ exports.allowedTo = (...roles) =>
     //1)access role
 
     if (!roles.includes(req.user.role)) {
-      return next(new ApiError("This user not allowed to accesse this route",401));
+      return next(
+        new ApiError("This user not allowed to accesse this route", 401)
+      );
     }
 
     next();

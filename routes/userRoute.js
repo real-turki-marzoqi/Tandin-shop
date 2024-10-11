@@ -7,7 +7,9 @@ const {
   updateUser,
   deleteUser,
   uploadUserImage,
-  resizeImage,
+  addUserProfileImage,
+  updateUserProfileImage,
+  deleteUserProfileImage,
   changeUserPassword,
   getLoggedUserData,
   updateLoggedUserPassword,
@@ -19,11 +21,12 @@ const {
 
 const {
   createUserValidator,
-  getUserVlidator,
+  getUserValidator,
   updateUserValidator,
-  deleteUserVlidator,
+  deleteUserValidator,
   userChangePasswordValidator,
-  updateLoogedUserValidator,
+  updateLoggedUserDataValidator,
+  UpdateLoggedUserPasswordValidator,
 } = require("../utils/validators/userValidator");
 
 const authService = require("../services/authService");
@@ -31,13 +34,24 @@ const authService = require("../services/authService");
 const router = express.Router();
 
 router.get("/getme", authService.protect, getLoggedUserData, getUser);
-router.put("/changemypassword", authService.protect, updateLoggedUserPassword);
+
+router.put(
+  "/changemypassword",
+  authService.protect,
+  UpdateLoggedUserPasswordValidator,
+  updateLoggedUserPassword
+);
+
 router.put(
   "/updateme",
   authService.protect,
-  updateLoogedUserValidator,
+  updateLoggedUserDataValidator,
+  getLoggedUserData,
+  uploadUserImage,
+  updateUserProfileImage,
   updateLoggedUserData
 );
+
 router.put("/deactivation", authService.protect, deactivationLoggedUser);
 
 router.use(authService.protect, authService.allowedTo("admin"));
@@ -48,17 +62,18 @@ router.put(
   changeUserPassword
 );
 router.put("/suspend/:id", suspendSpecificUser);
+
 router.put("/unsuspend/:id", unsuspendSpecificUser);
 
 router
   .route("/")
-  .post(uploadUserImage, resizeImage, createUserValidator, createUser)
+  .post(uploadUserImage, addUserProfileImage, createUserValidator, createUser)
   .get(getUsers);
 
 router
   .route("/:id")
-  .get(getUserVlidator, getUser)
-  .put(uploadUserImage, resizeImage, updateUserValidator, updateUser)
-  .delete(deleteUserVlidator, deleteUser);
+  .get(getUserValidator, getUser)
+  .put(uploadUserImage, updateUserProfileImage, updateUserValidator, updateUser)
+  .delete(deleteUserProfileImage, deleteUserValidator, deleteUser);
 
 module.exports = router;

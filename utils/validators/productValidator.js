@@ -61,7 +61,9 @@ exports.createProductValidator = [
     .isArray()
     .withMessage("Available colors must be an array of strings"),
 
-  check("imageCover").notEmpty().withMessage("Product cover image is required"),
+  check("imageCover")
+    .notEmpty()
+    .withMessage("Product cover image is required"),
 
   check("images")
     .optional()
@@ -75,7 +77,6 @@ exports.createProductValidator = [
     .withMessage("Invalid category ID format")
     .custom(async (value) => {
       const category = await CategoryModel.findById(value);
-
       if (!category) {
         throw new Error(`No Category Found For this id ${value}`);
       }
@@ -85,30 +86,22 @@ exports.createProductValidator = [
     .optional()
     .isMongoId()
     .withMessage("Invalid subcategory ID format")
-    //check if subCategory exists in db
-    .custom(async (value) => {
-      const subCategories = await SubCategoryModel.find({
-        _id: { $in: value },
-      });
+    .custom(async (value, { req }) => {
+      if (!value) return true;
+      const subCategories = await SubCategoryModel.find({ _id: { $in: value } });
       if (subCategories.length !== value.length) {
         throw new Error("One or more subcategory IDs are invalid");
       }
-    })
-    // check if subCategories are belong to the category that used
-    .custom(async (value, { req }) => {
-      const subCategoriesAreRelatedToSelectedCategory =
-        await SubCategoryModel.find({ category: req.body.category });
-
-      const subCategoriesIdsInDB =
-        subCategoriesAreRelatedToSelectedCategory.map((subCategory) =>
-          subCategory._id.toString()
-        );
-
-      if (!value.every((v) => subCategoriesIdsInDB.includes(v))) {
-        throw new Error(
-          "The subCategories are not related to the selected category"
-        );
+      const subCategoriesRelated = await SubCategoryModel.find({
+        category: req.body.category,
+      });
+      const subCategoryIds = subCategoriesRelated.map((subCat) =>
+        subCat._id.toString()
+      );
+      if (!value.every((id) => subCategoryIds.includes(id))) {
+        throw new Error("Subcategories are not related to the selected category");
       }
+      return true;
     }),
 
   check("brand")
@@ -116,9 +109,8 @@ exports.createProductValidator = [
     .isMongoId()
     .withMessage("Invalid brand ID format")
     .custom(async (value) => {
-      const category = await brandModel.findById(value);
-
-      if (!category) {
+      const brand = await brandModel.findById(value);
+      if (!brand) {
         throw new Error(`No brand Found For this id ${value}`);
       }
     }),
@@ -138,37 +130,154 @@ exports.createProductValidator = [
     .optional()
     .isNumeric()
     .withMessage("Ratings quantity must be a number"),
+
   body("title").custom((val, { req }) => {
     req.body.slug = slugify(val);
     return true;
   }),
+  
   validatorMiddleWare,
 ];
 
-//get product validaidator
+// get product validator
 exports.getProductValidator = [
   check("id").isMongoId().withMessage("Invalid product id format"),
-
   validatorMiddleWare,
 ];
 
-//get product validaidator
+// delete product validator
 exports.deleteProductValidator = [
   check("id").isMongoId().withMessage("Invalid product id format"),
-
   validatorMiddleWare,
 ];
 
-// Update product validator
+// update product validator
 exports.updateProductValidator = [
-  check("id").isMongoId().withMessage("Invalid product id format"),
-
-  body("title")
+  check("title")
     .optional()
+    .isLength({ min: 2 })
+    .withMessage("Product title must be at least 2 characters")
+    .isLength({ max: 100 })
+    .withMessage("Product title must be at most 100 characters")
     .custom((val, { req }) => {
       req.body.slug = slugify(val);
       return true;
     }),
 
+  check("description")
+    .optional()
+    .isLength({ min: 10 })
+    .withMessage("Product description must be at least 10 characters"),
+
+  check("quantity")
+    .optional()
+    .isNumeric()
+    .withMessage("Product quantity must be a number"),
+
+  check("sold")
+    .optional()
+    .isNumeric()
+    .withMessage("Product sold must be a number"),
+
+  check("price")
+    .optional()
+    .isNumeric()
+    .withMessage("Product price must be a number")
+    .custom((value) => {
+      if (value > 1000000) {
+        throw new Error("Product price must not exceed 1 million");
+      }
+      return true;
+    }),
+
+  check("priceAfterDiscount")
+    .optional()
+    .toFloat()
+    .isNumeric()
+    .withMessage("Price after discount must be a number")
+    .custom((value, { req }) => {
+      if (req.body.price <= value) {
+        throw new Error("Price after discount must be lower than the price");
+      }
+      return true;
+    }),
+
+  check("availableColors")
+    .optional()
+    .isArray()
+    .withMessage("Available colors must be an array of strings"),
+
+  check("imageCover")
+    .optional(),
+    
+
+
+  check("images")
+    .optional()
+    .isArray()
+    .withMessage("Product images must be an array of strings"),
+
+  check("category")
+    .optional()
+    .isMongoId()
+    .withMessage("Invalid category ID format")
+    .custom(async (value) => {
+      const category = await CategoryModel.findById(value);
+      if (!category) {
+        throw new Error(`No Category Found For this id ${value}`);
+      }
+    }),
+
+  check("subCategory")
+    .optional()
+    .isMongoId()
+    .withMessage("Invalid subcategory ID format")
+    .custom(async (value, { req }) => {
+      if (!value) return true;
+      const subCategories = await SubCategoryModel.find({ _id: { $in: value } });
+      if (subCategories.length !== value.length) {
+        throw new Error("One or more subcategory IDs are invalid");
+      }
+      const subCategoriesRelated = await SubCategoryModel.find({
+        category: req.body.category,
+      });
+      const subCategoryIds = subCategoriesRelated.map((subCat) =>
+        subCat._id.toString()
+      );
+      if (!value.every((id) => subCategoryIds.includes(id))) {
+        throw new Error("Subcategories are not related to the selected category");
+      }
+      return true;
+    }),
+
+  check("brand")
+    .optional()
+    .isMongoId()
+    .withMessage("Invalid brand ID format")
+    .custom(async (value) => {
+      const brand = await brandModel.findById(value);
+      if (!brand) {
+        throw new Error(`No brand Found For this id ${value}`);
+      }
+    }),
+
+  check("ratingsAverage")
+    .optional()
+    .isNumeric()
+    .withMessage("Ratings average must be a number")
+    .custom((value) => {
+      if (value < 0 || value > 5) {
+        throw new Error("Ratings must be between 1.0 and 5.0");
+      }
+      return true;
+    }),
+
+  check("ratingsQuantity")
+    .optional()
+    .isNumeric()
+    .withMessage("Ratings quantity must be a number"),
+
+  
+  
   validatorMiddleWare,
 ];

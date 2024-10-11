@@ -11,9 +11,9 @@ const {
 } = require("../services/subCategoryService");
 
 const {
-  crateSubCategoryVlidator,
+  createSubCategoryValidator,
   getSubCategoryValidator,
-  updateSubCategoryVlaidator,
+  updateSubCategoryValidator,
   deleteSubCategoryValidator,
 } = require("../utils/validators/subCategoryVlidators");
 
@@ -30,7 +30,7 @@ router
     authService.protect,
     authService.allowedTo("admin", "maneger"),
     setCategoryIdToBody,
-    crateSubCategoryVlidator,
+    createSubCategoryValidator,
     creatSubCategory
   )
 
@@ -44,7 +44,7 @@ router
   .put(
     authService.protect,
     authService.allowedTo("admin", "maneger"),
-    updateSubCategoryVlaidator,
+    updateSubCategoryValidator,
     updateSubCategory
   )
 

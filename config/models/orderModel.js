@@ -59,7 +59,7 @@ const orderSchema = new mongoose.Schema(
 
 // mongoose query middleware to select Category Name
 orderSchema.pre(/^find/, function (next) {
-  this.populate({ path: 'user', select: "name profileImage email phone " })
+  this.populate({ path: 'user', select: "name image email phone " })
     .populate({
       path: "cartItems.product", select: "title imageCover "
     });

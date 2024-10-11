@@ -1,22 +1,19 @@
 const { check, body } = require("express-validator");
-const bcrypt = require('bcryptjs')
+const bcrypt = require('bcryptjs');
 const { default: slugify } = require("slugify");
 const validatorMiddleWare = require("../../middlewares/validatorMiddleWare");
 const UserModel = require("../../config/models/userModel");
-
 
 exports.createUserValidator = [
   check("name")
     .notEmpty()
     .withMessage("Name is required")
     .isLength({ min: 3 })
-    .withMessage("Name must be at least 3 chars")
-    .custom((val,{req})=>{
-
-      req.body.slug = slugify(val)
-      return true
+    .withMessage("Name must be at least 3 characters")
+    .custom((val, { req }) => {
+      req.body.slug = slugify(val);
+      return true;
     }),
-
 
   check("email")
     .notEmpty()
@@ -28,20 +25,21 @@ exports.createUserValidator = [
     .custom(async (value) => {
       const email = await UserModel.findOne({ email: value });
       if (email) {
-        throw new Error("Email is already exist");
+        throw new Error("Email already exists");
       }
+      return true;
     }),
 
   check("phone")
     .optional()
     .isMobilePhone(["ar-SA", "tr-TR"])
-    .withMessage("Only saudi and turkish numbers are allowed"),
+    .withMessage("Only Saudi and Turkish numbers are allowed"),
 
   check("password")
     .notEmpty()
     .withMessage("Password is required")
     .isLength({ min: 6 })
-    .withMessage("Password must be at least 6 chars")
+    .withMessage("Password must be at least 6 characters")
     .trim()
     .custom((password, { req }) => {
       if (password !== req.body.passwordConfirm) {
@@ -55,29 +53,33 @@ exports.createUserValidator = [
     .withMessage("Password confirm is required")
     .trim(),
 
-  check("profileImage").optional(),
-
+  check("image").optional(),
   check("role").optional(),
+
   validatorMiddleWare,
 ];
 
-exports.getUserVlidator = [
-  check("id").isMongoId().withMessage("Invalid User Id format"),
+exports.getUserValidator = [
+  check("id").isMongoId().withMessage("Invalid User ID format"),
   validatorMiddleWare,
 ];
 
-exports.deleteUserVlidator = [
-  check("id").isMongoId().withMessage("Invalid User Id format"),
+exports.deleteUserValidator = [
+  check("id").isMongoId().withMessage("Invalid User ID format"),
   validatorMiddleWare,
 ];
 
 exports.updateUserValidator = [
-  check("id").isMongoId().withMessage("Invalid User Id format"),
+  check("id").isMongoId().withMessage("Invalid User ID format"),
 
   check("name")
     .optional()
     .isLength({ min: 3 })
-    .withMessage("Name must be at least 3 chars"),
+    .withMessage("Name must be at least 3 characters")
+    .custom((val, { req }) => {
+      req.body.slug = slugify(val);
+      return true;
+    }),
 
   check("email")
     .optional()
@@ -88,61 +90,58 @@ exports.updateUserValidator = [
     .custom(async (value) => {
       const email = await UserModel.findOne({ email: value });
       if (email) {
-        throw new Error("Email is already exist");
+        throw new Error("Email already exists");
       }
+      return true;
     }),
 
   check("phone")
     .optional()
     .isMobilePhone(["ar-SA", "tr-TR"])
-    .withMessage("Only saudi and turkish numbers are allowed"),
+    .withMessage("Only Saudi and Turkish numbers are allowed"),
 
-  check("profileImage").optional(),
-
+  check("image").optional(),
   check("role").optional(),
+
   validatorMiddleWare,
 ];
 
 exports.userChangePasswordValidator = [
-  check("id").isMongoId().withMessage("Invalid User Id format"),
+  check("id").isMongoId().withMessage("Invalid User ID format"),
+
   check("currenPassword")
     .notEmpty()
-    .withMessage("Password required")
+    .withMessage("Current password is required")
     .isLength({ min: 6 })
-    .withMessage("Password must be at least 6 chars")
+    .withMessage("Password must be at least 6 characters")
     .trim(),
 
   check("passwordConfirm")
     .notEmpty()
     .withMessage("New password confirm is required")
     .isLength({ min: 6 })
-    .withMessage("Password must be at least 6 chars")
+    .withMessage("Password must be at least 6 characters")
     .trim(),
 
   check("password")
     .notEmpty()
-    .withMessage("New Password Is required")
+    .withMessage("New password is required")
     .isLength({ min: 6 })
-    .withMessage("Password must be at least 6 chars")
+    .withMessage("Password must be at least 6 characters")
     .trim()
-    .custom(async(password, { req }) => {
-
-      const user = await UserModel.findById(req.params.id)
-
-      if(!user){
-
-        throw new Error('There is no user with this Id')
+    .custom(async (password, { req }) => {
+      const user = await UserModel.findById(req.params.id);
+      if (!user) {
+        throw new Error('No user found with this ID');
       }
 
-      const isValidCurrentPass = await bcrypt.compare(req.body.currenPassword,user.password)
-
-      if(!isValidCurrentPass){
-
-        throw new Error('Incorrect current password')
+      const isValidCurrentPass = await bcrypt.compare(req.body.currenPassword, user.password);
+      if (!isValidCurrentPass) {
+        throw new Error('Incorrect current password');
       }
 
       if (password !== req.body.passwordConfirm) {
-        throw new Error("New Password And New Password confirm do not match");
+        throw new Error("New password and password confirm do not match");
       }
       return true;
     }),
@@ -150,13 +149,15 @@ exports.userChangePasswordValidator = [
   validatorMiddleWare,
 ];
 
-
-exports.updateLoogedUserValidator = [
- 
+exports.updateLoggedUserDataValidator = [
   check("name")
     .optional()
     .isLength({ min: 3 })
-    .withMessage("Name must be at least 3 chars"),
+    .withMessage("Name must be at least 3 characters")
+    .custom((val, { req }) => {
+      req.body.slug = slugify(val);
+      return true;
+    }),
 
   check("email")
     .optional()
@@ -167,16 +168,26 @@ exports.updateLoogedUserValidator = [
     .custom(async (value) => {
       const email = await UserModel.findOne({ email: value });
       if (email) {
-        throw new Error("Email is already exist");
+        throw new Error("Email already exists");
       }
+      return true;
     }),
 
   check("phone")
     .optional()
     .isMobilePhone(["ar-SA", "tr-TR"])
-    .withMessage("Only saudi and turkish numbers are allowed"),
-    
+    .withMessage("Only Saudi and Turkish numbers are allowed"),
+
   validatorMiddleWare,
 ];
 
+exports.UpdateLoggedUserPasswordValidator = [ 
 
+  check('password')
+  .notEmpty().withMessage('Password is Required')
+  .isLength({ min: 6 })
+    .withMessage("Password must be at least 6 characters")
+    .trim()
+    ,
+    validatorMiddleWare
+]

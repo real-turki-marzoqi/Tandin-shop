@@ -8,49 +8,56 @@ exports.deleteImage = (model, modelName, FolderName) =>
   asyncHandler(async (req, res, next) => {
     const document = await model.findById(req.params.id);
 
-    if (!document || !document.image) {
+    if (!document) {
       return next(
         new ApiError(
-          `No image found for this ${modelName} (Id: ${req.params.id})`,
+          `No document found for this ${modelName} (Id: ${req.params.id})`,
           404
         )
       );
     }
 
-    const imageUrl = document.image;
+    if (document.image) {
+      const imageUrl = document.image;
 
-    const getPublicId = (imageUrl) => {
-      const parts = imageUrl.split("/");
-      const lastPart = parts.pop();
-      const publicId = lastPart.split(".")[0];
-      return `Tandn-shop/${FolderName}/${publicId}`;
-    };
+      const getPublicId = (imageUrl) => {
+        const parts = imageUrl.split("/");
+        const lastPart = parts.pop();
+        const publicId = lastPart.split(".")[0];
+        return `Tandn-shop/${FolderName}/${publicId}`;
+      };
 
-    const publicId = getPublicId(imageUrl);
+      const publicId = getPublicId(imageUrl);
 
-    if (!publicId) {
-      return next(
-        new ApiError(`Invalid public_id format (Id: ${req.params.id})`, 400)
-      );
-    }
-
-    try {
-      const result = await cloudinary.uploader.destroy(publicId);
-
-      if (result.result === "ok") {
-        next();
-      } else {
+      if (!publicId) {
         return next(
-          new ApiError(`Failed to delete image from Cloudinary ${result}`, 500)
+          new ApiError(`Invalid public_id format (Id: ${req.params.id})`, 400)
         );
       }
-    } catch (error) {
-      return next(
-        new ApiError(
-          `Error deleting image from Cloudinary ${error.message}`,
-          500
-        )
-      );
+
+      try {
+        const result = await cloudinary.uploader.destroy(publicId);
+
+        if (result.result === "ok") {
+          next();
+        } else {
+          return next(
+            new ApiError(
+              `Failed to delete image from Cloudinary ${result}`,
+              500
+            )
+          );
+        }
+      } catch (error) {
+        return next(
+          new ApiError(
+            `Error deleting image from Cloudinary ${error.message}`,
+            500
+          )
+        );
+      }
+    } else {
+      next();
     }
   });
 
@@ -99,25 +106,17 @@ exports.ImageProssing = (modelNmae, folderName) =>
 
 exports.updateImage = (model, modelName, folderName) =>
   asyncHandler(async (req, res, next) => {
+    // البحث عن المستند باستخدام الـ ID
     const document = await model.findById(req.params.id);
     if (!document) {
-      return next(
-        new ApiError(`There is no ${modelName} found for this id`, 404)
-      );
+      return next(new ApiError(`No ${modelName} found for this ID`, 404));
     }
 
+    // التحقق من وجود صورة جديدة للرفع
     if (req.file && req.file.buffer) {
       const imageUrl = document.image;
 
-      if (!imageUrl) {
-        return next(
-          new ApiError(
-            `No image found for this ${modelName} (Id: ${req.params.id})`,
-            404
-          )
-        );
-      }
-
+      // دالة لاستخراج Public ID من رابط Cloudinary
       const getPublicId = (imageUrl) => {
         const parts = imageUrl.split("/");
         const lastPart = parts.pop();
@@ -125,27 +124,30 @@ exports.updateImage = (model, modelName, folderName) =>
         return `Tandn-shop/${folderName}/${publicId}`;
       };
 
-      const publicId = getPublicId(imageUrl);
-
-      try {
-        const result = await cloudinary.uploader.destroy(publicId);
-        if (result.result !== "ok") {
+      if (imageUrl) {
+        // حذف الصورة القديمة من Cloudinary
+        const publicId = getPublicId(imageUrl);
+        try {
+          const result = await cloudinary.uploader.destroy(publicId);
+          if (result.result !== "ok") {
+            return next(
+              new ApiError(
+                `Failed to delete image from Cloudinary: ${result.result}`,
+                500
+              )
+            );
+          }
+        } catch (error) {
           return next(
             new ApiError(
-              `Failed to delete image from Cloudinary: ${result.result}`,
+              `Error deleting image from Cloudinary: ${error.message}`,
               500
             )
           );
         }
-      } catch (error) {
-        return next(
-          new ApiError(
-            `Error deleting image from Cloudinary: ${error.message}`,
-            500
-          )
-        );
       }
 
+      // معالجة الصورة الجديدة ورفعها
       const filename = `${modelName}-${uuidv4()}-${Date.now()}.jpeg`;
       const newPublicId = filename.split(".")[0];
 
@@ -174,6 +176,7 @@ exports.updateImage = (model, modelName, folderName) =>
           stream.end(processedImageBuffer);
         });
 
+        // تحديث رابط الصورة في المستند
         document.image = cloudinaryResponse.secure_url;
         await document.save();
 

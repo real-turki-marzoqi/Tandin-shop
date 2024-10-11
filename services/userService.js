@@ -1,6 +1,4 @@
 const asyncHandler = require("express-async-handler");
-const sharp = require("sharp");
-const { v4: uuidv4 } = require("uuid");
 const bcrypt = require("bcryptjs");
 
 const { uploadSingleImage } = require("../middlewares/uploadImageMiddleWare");
@@ -11,25 +9,26 @@ const ApiError = require("../utils/apiError");
 const createToken = require("../utils/createToken");
 const sendEmail = require("../utils/sendEmail");
 
+const imageFactory = require("../middlewares/imagesMiddleWares");
+
 // upload Single Image
-exports.uploadUserImage = uploadSingleImage("profileImage");
+exports.uploadUserImage = uploadSingleImage("image");
 
 // Image Processing
-exports.resizeImage = asyncHandler(async (req, res, next) => {
-  const filename = `user-${uuidv4()}-${Date.now()}.jpeg`;
+exports.addUserProfileImage = imageFactory.ImageProssing("User", "Users");
 
-  if (req.file && req.file.buffer) {
-    await sharp(req.file.buffer)
-      .resize(600, 600)
-      .toFormat("jpeg")
-      .jpeg({ quality: 90 })
-      .toFile(`uploads/users/${filename}`);
+exports.updateUserProfileImage = imageFactory.updateImage(
+  User,
+  "User",
+  "Users"
+);
 
-    req.body.profileImage = filename;
-  }
-
-  next();
-});
+// delete image MiddleWare
+exports.deleteUserProfileImage = imageFactory.deleteImage(
+  User,
+  "User",
+  "Users"
+);
 
 // @desc get Users
 // @route PUT /api/v1/users
@@ -58,7 +57,7 @@ exports.updateUser = asyncHandler(async (req, res, next) => {
       slug: req.body.slug,
       email: req.body.email,
       phone: req.body.phone,
-      profileImage: req.body.profileImage,
+      image: req.body.image,
       role: req.body.role,
     },
 
@@ -124,11 +123,9 @@ exports.suspendSpecificUser = asyncHandler(async (req, res, next) => {
     subject: "Your Account has been suspended",
     message: suspendMessage,
   });
-  res
-    .status(200)
-    .json({
-      msg: `The user (username:${user.name}) has been suspended successfully`,
-    });
+  res.status(200).json({
+    msg: `The user (username:${user.name}) has been suspended successfully`,
+  });
 });
 
 exports.unsuspendSpecificUser = asyncHandler(async (req, res, next) => {
@@ -143,11 +140,9 @@ exports.unsuspendSpecificUser = asyncHandler(async (req, res, next) => {
     subject: "Your Account has been suspended",
     message: reactivationMessage,
   });
-  res
-    .status(200)
-    .json({
-      msg: `The user (username:${user.name}) has been suspended successfully`,
-    });
+  res.status(200).json({
+    msg: `The user (username:${user.name}) has been suspended successfully`,
+  });
 });
 
 // @desc get logged User data
@@ -186,7 +181,12 @@ exports.updateLoggedUserPassword = asyncHandler(async (req, res, next) => {
 exports.updateLoggedUserData = asyncHandler(async (req, res, next) => {
   const updatedUser = await User.findByIdAndUpdate(
     req.user._id,
-    { name: req.body.name, phone: req.body.phone, email: req.body.email },
+    {
+      name: req.body.name,
+      phone: req.body.phone,
+      email: req.body.email,
+      image: req.body.image,
+    },
     { new: true }
   );
 
