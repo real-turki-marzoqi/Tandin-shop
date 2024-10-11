@@ -91,28 +91,6 @@ productSchema.pre(/^find/, function (next) {
   next();
 });
 
-// make images url
-const setImageUrl = (doc) => {
-  if (doc.imageCover) {
-    const imageUrl = `${process.env.BASE_URL}/products/${doc.imageCover}`;
-    doc.imageCover = imageUrl;
-  }
-  if (doc.images) {
-    const imagesList = [];
-    doc.images.forEach(image => {
-      const imageUrl = `${process.env.BASE_URL}/products/${image}`;
-      imagesList.push(imageUrl);
-    });
-    doc.images = imagesList;
-  }
-};
 
-productSchema.post('init', (doc) => {
-  setImageUrl(doc);
-});
-
-productSchema.post('save', (doc) => {
-  setImageUrl(doc);
-});
 
 module.exports = mongoose.model("Product", productSchema);

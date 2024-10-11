@@ -20,6 +20,8 @@ exports.categoryImageProssing =imageFactory.ImageProssing('Category','Categories
 // delete image MiddleWare
 exports.deleteCategoryImage = imageFactory.deleteImage(Category, 'Category', 'Categories');
 
+exports.updateCategoryImage = imageFactory.updateImage(Category, 'Category', 'Categories')
+
 // @desc get list of categories
 // @route GET /api/v1/categories
 // access Public

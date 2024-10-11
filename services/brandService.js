@@ -11,6 +11,9 @@ exports.uploadBrandImage = uploadSingleImage("image");
 // Image Processing
 exports.brandeImageProssing =imageFactory.ImageProssing('Brand','Brands')
 
+//
+exports.updateBrandImage = imageFactory.updateImage(Brand, 'Brand', 'Brands')
+
 // delete image MiddleWare
 exports.deleteBrandImage = imageFactory.deleteImage(Brand, 'Brand', 'Brands');
 

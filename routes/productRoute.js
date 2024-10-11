@@ -8,6 +8,8 @@ const {
   deleteProduct,
   uploadProductImages,
   resizeProductImages,
+  deleteProductImages,
+  updateProductImages,
 } = require("../services/productService");
 
 const {
@@ -19,13 +21,11 @@ const {
 
 const authService = require("../services/authService");
 
-const reviewRoute = require('./reviewRoute')
+const reviewRoute = require("./reviewRoute");
 
 const router = express.Router();
 
 router.use("/:productId/reviews", reviewRoute);
-
-
 
 router
   .route("/")
@@ -48,13 +48,14 @@ router
     authService.protect,
     authService.allowedTo("admin", "maneger"),
     uploadProductImages,
-    resizeProductImages,
+    updateProductImages,
     updateProductValidator,
     updateProduct
   )
   .delete(
     authService.protect,
     authService.allowedTo("admin"),
+    deleteProductImages,
     deleteProductValidator,
     deleteProduct
   );
