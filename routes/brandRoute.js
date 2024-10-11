@@ -27,9 +27,9 @@ router
   .post(
     authService.protect,
     authService.allowedTo("admin", "maneger"),
+    createBrandVlidator,
     uploadBrandImage,
     brandeImageProssing,
-    createBrandVlidator,
     createBrand
   )
 
@@ -42,10 +42,10 @@ router
   .put(
     authService.protect,
     authService.allowedTo("admin", "maneger"),
+    updateBrandValidator,
     deleteBrandImage,
     uploadBrandImage,
     brandeImageProssing,
-    updateBrandValidator,
     updateBrand
   )
 

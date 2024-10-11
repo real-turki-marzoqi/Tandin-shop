@@ -32,9 +32,9 @@ router
   .post(
     authService.protect,
     authService.allowedTo("admin","maneger"),
+    createCategoryVlidator,
     uploadCategoryImage,
     categoryImageProssing,
-    createCategoryVlidator,
     createCategory
   );
 
@@ -44,10 +44,10 @@ router
   .put(
     authService.protect,
     authService.allowedTo("admin","maneger"),
+    updateCategoryValidator,
     deleteCategoryImage,
     uploadCategoryImage,
     categoryImageProssing,
-    updateCategoryValidator,
     updateCategory
   )
   .delete(
