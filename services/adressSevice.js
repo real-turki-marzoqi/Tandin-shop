@@ -25,7 +25,7 @@ exports.removeAdress = asyncHandler(async (req, res, next) => {
   const user = await User.findByIdAndUpdate(
     req.user._id,
     {
-      $pull: { adresses: { _id: req.params.adressId } }, // إزالة العنوان باستخدام _id
+      $pull: { adresses: { _id: req.params.adressId } }, 
     },
     { new: true }
   );
@@ -57,7 +57,7 @@ exports.updateAdress = asyncHandler(async (req, res, next) => {
       return res.status(400).json({ message: "User not authenticated" });
     }
   
-    // بناء حقول التحديث بشكل ديناميكي حسب الحقول الموجودة في الـ req.body
+    
     const updateFields = {};
     Object.keys(req.body).forEach((key) => {
       updateFields[`adresses.$.${key}`] = req.body[key];
