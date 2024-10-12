@@ -5,13 +5,13 @@ const CouponModel = require("../../config/models/couponModel");
 exports.createCouponValidator = [
   check("name")
     .notEmpty()
-    .withMessage("Coupon Name Is Required")
+    .withMessage("Coupon name is required")
     .trim()
     .toUpperCase()
     .custom(async (value) => {
       const coupon = await CouponModel.findOne({ name: value });
       if (coupon) {
-        throw new Error("Coupon name Must Be unique");
+        throw new Error("Coupon name must be unique");
       }
       return true;
     }),
@@ -19,12 +19,12 @@ exports.createCouponValidator = [
   check("expirationDate")
     .optional()
     .isISO8601()
-    .withMessage("Coupon Expiration Date Must Be a Date Value")
+    .withMessage("Coupon expiration date must be a valid date")
     .toDate()
     .custom((value) => {
       if (value < Date.now()) {
         throw new Error(
-          "Coupon Expiration Date Must be equal to or greater than today's date"
+          "Coupon expiration date must be equal to or later than today's date"
         );
       }
       return true;
@@ -32,9 +32,16 @@ exports.createCouponValidator = [
 
   check("discount")
     .notEmpty()
-    .withMessage("Discount Value Is Required")
+    .withMessage("Discount value is required")
     .isNumeric()
-    .withMessage("Discount Value Must be numeric"),
+    .withMessage("Discount value must be numeric")
+    .custom((value) => {
+      if (value <= 0 || value > 100) {
+        throw new Error("Discount value must be between 1 and 100");
+      }
+      return true;
+    }),
+
   validatorMiddleWare,
 ];
 
@@ -56,7 +63,7 @@ exports.UpdateCouponValidator = [
     .custom(async (value) => {
       const coupon = await CouponModel.findOne({ name: value });
       if (coupon) {
-        throw new Error("Coupon name Must Be unique");
+        throw new Error("Coupon name must be unique");
       }
       return true;
     }),
@@ -64,12 +71,12 @@ exports.UpdateCouponValidator = [
   check("expirationDate")
     .optional()
     .isISO8601()
-    .withMessage("Coupon Expiration Date Must Be a Date Value")
+    .withMessage("Coupon expiration date must be a valid date")
     .toDate()
     .custom((value) => {
       if (value < Date.now()) {
         throw new Error(
-          "Coupon Expiration Date Must be equal to or greater than today's date"
+          "Coupon expiration date must be equal to or later than today's date"
         );
       }
       return true;
@@ -78,6 +85,13 @@ exports.UpdateCouponValidator = [
   check("discount")
     .optional()
     .isNumeric()
-    .withMessage("Discount Value Must be numeric"),
+    .withMessage("Discount value must be numeric")
+    .custom((value) => {
+      if (value <= 0 || value > 100) {
+        throw new Error("Discount value must be between 1 and 100");
+      }
+      return true;
+    }),
+
   validatorMiddleWare,
 ];

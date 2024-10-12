@@ -28,7 +28,7 @@ router
   .get(getLoggedUserCart)
   .delete(clearCart);
 
-router.route("/applycoupon").put(applyCouponValidator,applyCoupon);
+router.route("/applycoupon").put(applyCouponValidator, applyCoupon);
 
 router
   .route("/:itemId")

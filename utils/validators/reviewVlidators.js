@@ -2,32 +2,36 @@ const { check } = require("express-validator");
 
 const validatorMiddleWare = require("../../middlewares/validatorMiddleWare");
 const ReviewModel = require("../../config/models/reviewModel");
+const ProductModel = require('../../config/models/productModel');
+const ApiError = require("../apiError");
 
-exports.createReviewVlidator = [
+exports.createReviewValidator = [
   check("title").optional(),
 
   check("ratings")
     .notEmpty()
-    .withMessage("review value is required")
-    .isFloat()
-    .withMessage("ratings must be float value between 1.0 to 5.0")
-    .custom((value) => {
-      if (value < 1 || value > 5) {
-        throw new Error("Ratings must be between 1.0 and 5.0");
-      }
-      return true;
-    }),
+    .withMessage("Review rating is required")
+    .isFloat({ min: 1, max: 5 })
+    .withMessage("Ratings must be a float value between 1.0 and 5.0"),
+
   check("user")
     .notEmpty()
-    .withMessage("user id is required")
+    .withMessage("User ID is required")
     .isMongoId()
-    .withMessage("Invalid User Id"),
+    .withMessage("Invalid User ID"),
 
   check("product")
     .notEmpty()
-    .withMessage("Product Id is Required")
+    .withMessage("Product ID is required")
     .isMongoId()
-    .withMessage("Invalid Product Id")
+    .withMessage("Invalid Product ID")
+    .custom(async (value) => {
+      const product = await ProductModel.findById(value);
+      if (!product) {
+        throw new ApiError(`No product found with this ID: ${value}`);
+      }
+      return true;
+    })
     .custom(async (value, { req }) => {
       const review = await ReviewModel.findOne({
         user: req.user._id,
@@ -35,12 +39,14 @@ exports.createReviewVlidator = [
       });
 
       if (review) {
-        throw new Error("You already created a review on this product before");
+        throw new Error("You have already created a review for this product.");
       }
+      return true;
     }),
 
   validatorMiddleWare,
 ];
+
 
 exports.getReviewValidator = [
   check("id").isMongoId().withMessage("Invalid Review Id"),
@@ -49,30 +55,29 @@ exports.getReviewValidator = [
 
 exports.updateReviewValidator = [
   check("id")
-    .notEmpty()
-    .withMessage("No Review Id Found")
     .isMongoId()
-    .withMessage("Invalid Review Id")
+    .withMessage("Invalid Review ID"),
 
-    .custom(async (value, { req }) => {
-      const review = await ReviewModel.findById(value);
-      if (!review || !review.user) {
-        throw new Error(`there is no review with this id ${value} `);
-      }
-      // استخدام equals لمقارنة ObjectId
-      if (!review.user.equals(req.user._id)) {
-        throw new Error("you are not allowed to perform this action");
-      }
-    }),
   check("title").optional(),
 
   check("ratings")
     .optional()
-    .isFloat()
-    .withMessage("ratings must be float value between 1.0 to 5.0")
-    .custom((value) => {
-      if (value < 1 || value > 5) {
-        throw new Error("Ratings must be between 1.0 and 5.0");
+    .isFloat({ min: 1, max: 5 })
+    .withMessage("Ratings must be a float value between 1.0 and 5.0"),
+
+  check("user")
+    .optional()
+    .isMongoId()
+    .withMessage("Invalid User ID"),
+
+  check("product")
+    .optional()
+    .isMongoId()
+    .withMessage("Invalid Product ID")
+    .custom(async (value) => {
+      const product = await ProductModel.findById(value);
+      if (!product) {
+        throw new ApiError(`No product found with this ID: ${value}`);
       }
       return true;
     }),
@@ -80,23 +85,23 @@ exports.updateReviewValidator = [
   validatorMiddleWare,
 ];
 
+
 exports.deleteReviewValidator = [
   check("id")
-    .notEmpty()
-    .withMessage("No Review Id Found")
     .isMongoId()
-    .withMessage("Invalid Review Id")
+    .withMessage("Invalid Review ID")
     .custom(async (value, { req }) => {
       const review = await ReviewModel.findById(value);
-      if (!review.user.equals(req.user._id)) {
-        throw new Error(`There is no review with this ID: ${value}`);
+      if (!review) {
+        throw new Error(`No review found with this ID: ${value}`);
       }
 
-      if (req.user.role === "user") {
-        if (!review.user || !review.user.equals(req.user._id)) {
-          throw new Error("You are not allowed to perform this action");
-        }
+      // If the user role is 'user', ensure that they own the review
+      if (req.user.role === "user" && !review.user.equals(req.user._id)) {
+        throw new Error("You are not allowed to perform this action");
       }
     }),
+
   validatorMiddleWare,
 ];
+

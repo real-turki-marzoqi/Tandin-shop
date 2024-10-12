@@ -4,7 +4,7 @@ const orderSchema = new mongoose.Schema(
   {
     user: {
       type: mongoose.Schema.ObjectId,
-      ref: "User", 
+      ref: "User",
       required: [true, "User is required"],
     },
     cartItems: [
@@ -47,11 +47,22 @@ const orderSchema = new mongoose.Schema(
       default: false,
     },
     deliveredAt: Date,
+
     shippingAddress: {
-      city: { type: String,  }, 
-      phone: { type: String,},
-      postalCode: { type: String }, 
-      details: String, 
+     
+      city: {
+        type: String,
+        required: [true, "City Is Required"],
+      },
+      phone: {
+        type: String,
+        required: [true, "Phone Number Is Required"],
+      },
+      postalCode: {
+        type: String,
+        required: [true, "Postal Code Is Required"],
+      },
+      detailes: String,
     },
   },
   { timestamps: true }
@@ -59,11 +70,11 @@ const orderSchema = new mongoose.Schema(
 
 // mongoose query middleware to select Category Name
 orderSchema.pre(/^find/, function (next) {
-  this.populate({ path: 'user', select: "name image email phone " })
-    .populate({
-      path: "cartItems.product", select: "title imageCover "
-    });
+  this.populate({ path: "user", select: "name image email phone " }).populate({
+    path: "cartItems.product",
+    select: "title imageCover ",
+  });
   next();
 });
 
-module.exports = mongoose.model('Order', orderSchema);
+module.exports = mongoose.model("Order", orderSchema);

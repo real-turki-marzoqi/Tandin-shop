@@ -12,7 +12,7 @@ const authService = require("../services/authService");
 const {
   addAdressesValidator,
   updateAdressesValidator,
-  deleteAdressesValidator
+  deleteAdressesValidator,
 } = require("../utils/validators/adressesValidator");
 
 const router = express.Router();
@@ -33,7 +33,17 @@ router
 
 router
   .route("/:adressId")
-  .delete(authService.protect, authService.allowedTo("user"), deleteAdressesValidator,removeAdress)
-  .put(authService.protect, authService.allowedTo("user"),updateAdressesValidator,updateAdress);
+  .delete(
+    authService.protect,
+    authService.allowedTo("user"),
+    deleteAdressesValidator,
+    removeAdress
+  )
+  .put(
+    authService.protect,
+    authService.allowedTo("user"),
+    updateAdressesValidator,
+    updateAdress
+  );
 
 module.exports = router;

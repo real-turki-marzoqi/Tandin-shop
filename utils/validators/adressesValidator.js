@@ -2,51 +2,52 @@ const { check } = require("express-validator");
 const validatorMiddleWare = require("../../middlewares/validatorMiddleWare");
 
 exports.addAdressesValidator = [
-  check("alias").notEmpty().withMessage("Adress Alias is Required"),
+  check("alias")
+    .notEmpty()
+    .withMessage("Address alias is required"),
 
-  check("city").notEmpty().withMessage("City is Required"),
+  check("city")
+    .notEmpty()
+    .withMessage("City is required"),
 
   check("postalCode")
     .notEmpty()
-    .withMessage("Postal Code is Required")
-    .isNumeric()
-    .withMessage("Postal code must be a number"),
-
-  check("detailes").notEmpty().withMessage("Adress Detailes is Required"),
+    .withMessage("Postal code is required"),
 
   check("phone")
     .notEmpty()
-    .withMessage("Adress Detailes is Required")
+    .withMessage("Phone number is required")
     .isMobilePhone(["ar-SA", "tr-TR"])
-    .withMessage("Only saudi and turkish numbers are allowed"),
+    .withMessage("Only Saudi Arabian and Turkish phone numbers are allowed"),
 
   validatorMiddleWare,
 ];
+
 
 exports.updateAdressesValidator = [
+  check("adressId")
+    .isMongoId()
+    .withMessage("Invalid Address ID"),
 
-  check("id")
-  .isMongoId().withMessage('Invalid Adress Id'),
-  check("alias").notEmpty().optional(),
+  check("alias")
+    .optional(),
 
-  check("city").optional(),
+  check("city")
+    .optional(),
 
   check("postalCode")
-  .optional()
-    .isNumeric()
-    .withMessage("Postal code must be a number"),
-
-  check("detailes").optional(),
+    .optional(),
 
   check("phone")
-  .optional()
+    .optional()
     .isMobilePhone(["ar-SA", "tr-TR"])
-    .withMessage("Only saudi and turkish numbers are allowed"),
+    .withMessage("Only Saudi Arabian and Turkish phone numbers are allowed"),
 
   validatorMiddleWare,
 ];
 
+
 exports.deleteAdressesValidator = [
-  check('id')
+  check('adressId')
   .isMongoId().withMessage('Invalid Adress Id')
 ]

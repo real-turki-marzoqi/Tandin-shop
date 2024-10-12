@@ -48,7 +48,6 @@ app.post(
 
 // Middlewares
 app.use(express.json({ limit: "50kb" }));
-app.use(express.static(path.join(__dirname, "uploads")));
 app.use(cors());
 app.options("*", cors());
 app.use(compression());

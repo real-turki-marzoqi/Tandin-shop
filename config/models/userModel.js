@@ -57,19 +57,31 @@ const userSchema = new mongoose.Schema(
     wishList: [
       {
         type: mongoose.Schema.ObjectId,
-        ref: 'Product',
+        ref: "Product",
       },
     ],
-    adresses:[
+    adresses: [
       {
-        id:{type:mongoose.Schema.Types.ObjectId},
-        alias:String,
-        city:String,
-        phone:String,
-        postalCode:Number,
-        detailes:String
-      }
-    ]
+        id: { type: mongoose.Schema.Types.ObjectId },
+        alias: {
+          type: String,
+          required: [true, "Alias Is Required"],
+        },
+        city: {
+          type: String,
+          required: [true, "City Is Required"],
+        },
+        phone: {
+          type: String,
+          required: [true, "Phone Number Is Required"],
+        },
+        postalCode: {
+          type: String,
+          required: [true, "Postal Code Is Required"],
+        },
+        detailes: String,
+      },
+    ],
   },
   { timestamps: true }
 );
@@ -83,8 +95,6 @@ userSchema.pre("save", async function (next) {
 
   next();
 });
-
-
 
 const userModel = mongoose.model("User", userSchema);
 module.exports = userModel;

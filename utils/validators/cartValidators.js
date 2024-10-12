@@ -6,56 +6,59 @@ const CartModel = require("../../config/models/cartModel");
 exports.addCartValidator = [
   check("productId")
     .notEmpty()
-    .withMessage("Product id is required")
+    .withMessage("Product ID is required")
     .isMongoId()
-    .withMessage("Invalid Product Id")
+    .withMessage("Invalid Product ID")
     .custom(async (val) => {
       const product = await ProductModel.findById(val);
 
       if (!product) {
-        throw new Error(`Product With This Id ${val}Not Found`);
+        throw new Error(`Product with this ID: ${val} not found`);
       }
       return true;
     }),
+
   validatorMiddleWare,
 ];
 
 exports.removeSpecificCartItemValidator = [
   check("itemId")
+    .notEmpty()
+    .withMessage("Item ID is required")
     .isMongoId()
-    .withMessage("Invalid Item ID")
+    .withMessage("Item ID must be a valid MongoDB ID")
     .custom(async (val, { req }) => {
-      // البحث عن السلة الخاصة بالمستخدم
       const cart = await CartModel.findOne({ user: req.user._id });
 
       if (!cart) {
-        throw new Error("There is no cart found for this user");
+        throw new Error("No cart found for this user");
       }
 
-      // التحقق من وجود العنصر في السلة
       const cartItem = cart.cartItems.find(
         (item) => item._id.toString() === val
       );
 
       if (!cartItem) {
-        throw new Error("There is no cart item found with this ID");
+        throw new Error("No cart item found with this ID");
       }
 
-      return true; // إذا كان العنصر موجودًا
+      return true;
     }),
   validatorMiddleWare,
 ];
 
 exports.updateCartItemQuantityValidator = [
   check("itemId")
+    .notEmpty()
+    .withMessage("Item ID is required")
     .isMongoId()
-    .withMessage("Invalid Item ID")
+    .withMessage("Item ID must be a valid MongoDB ID")
     .custom(async (val, { req }) => {
       // البحث عن السلة الخاصة بالمستخدم
       const cart = await CartModel.findOne({ user: req.user._id });
 
       if (!cart) {
-        throw new Error("There is no cart found for this user");
+        throw new Error("No cart found for this user");
       }
 
       // التحقق من وجود العنصر في السلة
@@ -64,10 +67,10 @@ exports.updateCartItemQuantityValidator = [
       );
 
       if (!cartItem) {
-        throw new Error("There is no cart item found with this ID");
+        throw new Error("No cart item found with this ID");
       }
 
-      req.cartItem = cartItem; // تخزين العنصر في الطلب للاستخدام في التحقق التالي
+      req.cartItem = cartItem;
       return true;
     }),
 
@@ -83,9 +86,13 @@ exports.updateCartItemQuantityValidator = [
       // البحث عن المنتج للتحقق من الكمية المتاحة
       const product = await ProductModel.findById(cartProduct);
 
+      if (!product) {
+        throw new Error(`No product found with ID: ${cartProduct}`);
+      }
+
       if (val > product.quantity) {
         throw new Error(
-          `Available quantity of the product with this ID: (${cartProduct}) is (${product.quantity})`
+          `Available quantity of the product with ID (${cartProduct}) is (${product.quantity})`
         );
       }
 
@@ -96,9 +103,10 @@ exports.updateCartItemQuantityValidator = [
 ];
 
 exports.applyCouponValidator = [
-    check('coupon')
-    .notEmpty().withMessage('Coupon Is required')
+  check("coupon")
+    .notEmpty()
+    .withMessage("Coupon Is required")
     .toUpperCase()
-    .trim()
-    ,validatorMiddleWare
-]
+    .trim(),
+  validatorMiddleWare,
+];
