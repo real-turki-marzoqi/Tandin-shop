@@ -74,29 +74,26 @@ exports.createOne = (model) =>
 // @desc GET List Of Documents
 // @route GET /api/v1/documents
 // access Public
-exports.getAll = (model, modelName) =>
+exports.getAll = (Model, modelName = '') =>
   asyncHandler(async (req, res) => {
     let filter = {};
-
-    if (req.filterObject) {
-      filter = req.filterObject;
+    if (req.filterObj) {
+      filter = req.filterObj;
     }
-
-    const documentCount = await model.countDocuments();
-    const apiFeatures = new ApiFeatures(model.find(filter), req.query)
-      .pagenate(documentCount)
+    // Build query
+    const documentsCounts = await Model.countDocuments();
+    const apiFeatures = new ApiFeatures(Model.find(filter), req.query)
+      .paginate(documentsCounts)
       .filter()
-      .sort()
+      .search(modelName)
       .limitFields()
-      .search(modelName);
+      .sort();
 
     // Execute query
-    const { mongooseQuery, pagenationResult } = apiFeatures;
-
-    const documents = await apiFeatures.mongooseQuery;
+    const { mongooseQuery, paginationResult } = apiFeatures;
+    const documents = await mongooseQuery;
 
     res
       .status(200)
-      .json({ results: documents.length, pagenationResult, data: documents });
+      .json({ results: documents.length, paginationResult, data: documents });
   });
-
