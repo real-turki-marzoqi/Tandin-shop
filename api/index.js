@@ -69,7 +69,7 @@ app.use(sanitizeMiddleware);
 }); */
 
 // Apply the rate limiting middleware to all requests.
-app.use("/api", limiter);
+/* app.use("/api", limiter); */
 
 // middleware to protect against HTTP Parameter Pollution attacks
 app.use(
