@@ -62,11 +62,11 @@ app.use(mongoSanitize());
 app.use(sanitizeMiddleware);
 
 // Limit each IP to 100 requests per `window` (here, per 15 minutes).
-const limiter = rateLimit({
+/* const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   limit: 100,
   message: "To many requiests created from this IP,Please try again later",
-});
+}); */
 
 // Apply the rate limiting middleware to all requests.
 app.use("/api", limiter);
