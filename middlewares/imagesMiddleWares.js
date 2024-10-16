@@ -64,15 +64,15 @@ exports.deleteImage = (model, modelName, FolderName) =>
 exports.ImageProssing = (modelNmae, folderName) =>
   asyncHandler(async (req, res, next) => {
     if (req.file && req.file.buffer) {
-      const filename = `${modelNmae}-${uuidv4()}-${Date.now()}.jpeg`;
+      const filename = `${modelNmae}-${uuidv4()}-${Date.now()}.png`;
 
       const publicId = filename.split(".")[0]; // استخدام اسم الصورة بدون الامتداد
 
       try {
         const processedImageBuffer = await sharp(req.file.buffer)
-          .resize(600, 600)
-          .toFormat("jpeg")
-          .jpeg({ quality: 90 })
+        
+          .toFormat("png")
+          .png({ quality: 90 })
           .toBuffer();
 
         // استخدام public_id عند رفع الصورة إلى Cloudinary
@@ -148,14 +148,14 @@ exports.updateImage = (model, modelName, folderName) =>
       }
 
       // معالجة الصورة الجديدة ورفعها
-      const filename = `${modelName}-${uuidv4()}-${Date.now()}.jpeg`;
+      const filename = `${modelName}-${uuidv4()}-${Date.now()}.png`;
       const newPublicId = filename.split(".")[0];
 
       try {
         const processedImageBuffer = await sharp(req.file.buffer)
-          .resize(600, 600)
-          .toFormat("jpeg")
-          .jpeg({ quality: 90 })
+        
+          .toFormat("png")
+          .png({ quality: 90 })
           .toBuffer();
 
         const cloudinaryResponse = await new Promise((resolve, reject) => {
@@ -193,7 +193,7 @@ exports.resizeProductImages = (modelName, folderName) =>
   asyncHandler(async (req, res, next) => {
     // 1- Image processing for imageCover
     if (req.files.imageCover && req.files.imageCover[0].buffer) {
-      const imageCoverFileName = `${modelName}-${uuidv4()}-${Date.now()}-cover.jpeg`;
+      const imageCoverFileName = `${modelName}-${uuidv4()}-${Date.now()}-cover.png`;
       const publicIdCover = imageCoverFileName.split(".")[0]; // استخدام اسم الصورة بدون الامتداد
 
       try {
@@ -201,8 +201,8 @@ exports.resizeProductImages = (modelName, folderName) =>
           req.files.imageCover[0].buffer
         )
           .resize(2000, 1333)
-          .toFormat("jpeg")
-          .jpeg({ quality: 95 })
+          .toFormat("png")
+          .png({ quality: 95 })
           .toBuffer();
 
         // رفع الصورة إلى Cloudinary باستخدام public_id
@@ -245,14 +245,14 @@ exports.resizeProductImages = (modelName, folderName) =>
           if (img.buffer) {
             const imageName = `${modelName}-${uuidv4()}-${Date.now()}-${
               index + 1
-            }.jpeg`;
+            }.png`;
             const publicIdImage = imageName.split(".")[0]; // استخدام اسم الصورة بدون الامتداد
 
             try {
               const processedImageBuffer = await sharp(img.buffer)
                 .resize(2000, 1333)
-                .toFormat("jpeg")
-                .jpeg({ quality: 95 })
+                .toFormat("png")
+                .png({ quality: 95 })
                 .toBuffer();
 
               // رفع الصورة إلى Cloudinary باستخدام public_id
@@ -487,7 +487,7 @@ exports.updateProductImages = (model, modelName, folderName) =>
 
     // 5- معالجة ورفع صورة الغلاف الجديدة إذا كانت موجودة
     if (req.files.imageCover && req.files.imageCover[0].buffer) {
-      const imageCoverFileName = `${modelName}-${uuidv4()}-${Date.now()}-cover.jpeg`;
+      const imageCoverFileName = `${modelName}-${uuidv4()}-${Date.now()}-cover.png`;
       const publicIdCover = imageCoverFileName.split(".")[0];
 
       try {
@@ -495,8 +495,8 @@ exports.updateProductImages = (model, modelName, folderName) =>
           req.files.imageCover[0].buffer
         )
           .resize(2000, 1333)
-          .toFormat("jpeg")
-          .jpeg({ quality: 95 })
+          .toFormat("png")
+          .png({ quality: 95 })
           .toBuffer();
 
         const cloudinaryResponseCover = await new Promise((resolve, reject) => {
@@ -534,14 +534,14 @@ exports.updateProductImages = (model, modelName, folderName) =>
           if (img.buffer) {
             const imageName = `${modelName}-${uuidv4()}-${Date.now()}-${
               index + 1
-            }.jpeg`;
+            }.png`;
             const publicIdImage = imageName.split(".")[0];
 
             try {
               const processedImageBuffer = await sharp(img.buffer)
                 .resize(2000, 1333)
-                .toFormat("jpeg")
-                .jpeg({ quality: 95 })
+                .toFormat("png")
+                .png({ quality: 95 })
                 .toBuffer();
 
               const cloudinaryResponseImage = await new Promise(
